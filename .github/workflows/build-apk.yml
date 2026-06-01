@@ -34,6 +34,11 @@ jobs:
       - name: Gerar projeto nativo Android (expo prebuild)
         run: npx expo prebuild --platform android --no-install
 
+      - name: Fixar toolchain no JDK 17 (evita o Foojay quebrado no Gradle 9)
+        run: |
+          echo "org.gradle.java.installations.auto-download=false" >> android/gradle.properties
+          echo "org.gradle.java.installations.fromEnv=JAVA_HOME" >> android/gradle.properties
+
       - name: Dar permissão ao gradlew
         run: chmod +x android/gradlew
 
