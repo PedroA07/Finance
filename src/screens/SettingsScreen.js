@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Alert,
-  ActivityIndicator, ScrollView,
+  ScrollView, Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as Updates from 'expo-updates';
 import { useFinance } from '../context/FinanceContext';
 import { formatCurrency } from '../utils/formatters';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const RELEASES_URL = 'https://github.com/PedroA07/Finance/releases/latest';
 
 const COLORS = {
   bg: '#0F172A',
@@ -23,27 +24,11 @@ const COLORS = {
 
 export default function SettingsScreen() {
   const { transactions, totalIncome, totalExpense, balance } = useFinance();
-  const [checking, setChecking] = useState(false);
-  const [updateStatus, setUpdateStatus] = useState(null);
 
-  const checkForUpdates = async () => {
-    setChecking(true);
-    setUpdateStatus(null);
-    try {
-      const update = await Updates.checkForUpdateAsync();
-      if (update.isAvailable) {
-        setUpdateStatus('Atualização encontrada! Baixando...');
-        await Updates.fetchUpdateAsync();
-        setUpdateStatus('Atualização baixada. Reiniciando...');
-        await Updates.reloadAsync();
-      } else {
-        setUpdateStatus('O app já está na versão mais recente.');
-      }
-    } catch (e) {
-      setUpdateStatus('Erro ao verificar atualização: ' + e.message);
-    } finally {
-      setChecking(false);
-    }
+  const openReleases = () => {
+    Linking.openURL(RELEASES_URL).catch(() =>
+      Alert.alert('Erro', 'Não foi possível abrir o navegador.')
+    );
   };
 
   const handleClearData = () => {
@@ -96,36 +81,22 @@ export default function SettingsScreen() {
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Atualizações do App</Text>
         <Text style={styles.cardDesc}>
-          O app verifica automaticamente por atualizações do repositório GitHub ao abrir.
+          A cada nova versão publicada no repositório, um APK novo fica disponível
+          no mesmo link. Toque abaixo para baixar a versão mais recente.
         </Text>
-        <TouchableOpacity
-          style={styles.updateBtn}
-          onPress={checkForUpdates}
-          disabled={checking}
-        >
-          {checking
-            ? <ActivityIndicator color="#fff" size="small" />
-            : <Ionicons name="refresh-circle" size={20} color="#fff" />
-          }
-          <Text style={styles.updateBtnText}>
-            {checking ? 'Verificando...' : 'Verificar Atualizações'}
-          </Text>
+        <TouchableOpacity style={styles.updateBtn} onPress={openReleases}>
+          <Ionicons name="download" size={20} color="#fff" />
+          <Text style={styles.updateBtnText}>Baixar última versão</Text>
         </TouchableOpacity>
-        {updateStatus && (
-          <Text style={styles.updateStatus}>{updateStatus}</Text>
-        )}
       </View>
 
       {/* Repositório */}
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Repositório</Text>
-        <View style={styles.repoRow}>
+        <TouchableOpacity style={styles.repoRow} onPress={openReleases}>
           <Ionicons name="logo-github" size={20} color={COLORS.muted} />
           <Text style={styles.repoUrl}>github.com/PedroA07/Finance</Text>
-        </View>
-        <Text style={styles.cardDesc}>
-          Versão do canal: {Updates.channel || 'development'}
-        </Text>
+        </TouchableOpacity>
       </View>
 
       {/* Danger Zone */}

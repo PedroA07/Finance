@@ -1,10 +1,9 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
-import * as Updates from 'expo-updates';
 
 import { FinanceProvider } from './src/context/FinanceContext';
 import HomeScreen from './src/screens/HomeScreen';
@@ -58,25 +57,7 @@ function Tabs() {
   );
 }
 
-async function checkForUpdates() {
-  try {
-    const update = await Updates.checkForUpdateAsync();
-    if (update.isAvailable) {
-      await Updates.fetchUpdateAsync();
-      await Updates.reloadAsync();
-    }
-  } catch (_) {
-    // silent — no updates or no network
-  }
-}
-
 export default function App() {
-  useEffect(() => {
-    if (!__DEV__) {
-      checkForUpdates();
-    }
-  }, []);
-
   return (
     <FinanceProvider>
       <NavigationContainer>

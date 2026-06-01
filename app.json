@@ -22,17 +22,6 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    },
-    "updates": {
-      "enabled": true,
-      "checkAutomatically": "ON_LOAD",
-      "url": "https://u.expo.dev/fiance"
-    },
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
-    "plugins": [
-      "expo-updates"
-    ]
+    }
   }
 }
