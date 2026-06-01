@@ -1,0 +1,57 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ master, main ]
+  workflow_dispatch:   # permite rodar manualmente pelo botão "Run workflow"
+
+permissions:
+  contents: write       # necessário para publicar a Release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Configurar Java (JDK 17)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Instalar dependências
+        run: npm install
+
+      - name: Gerar projeto nativo Android (expo prebuild)
+        run: npx expo prebuild --platform android --no-install
+
+      - name: Dar permissão ao gradlew
+        run: chmod +x android/gradlew
+
+      - name: Compilar APK (release, assinado com debug key)
+        run: cd android && ./gradlew assembleRelease --no-daemon
+
+      - name: Renomear APK
+        run: cp android/app/build/outputs/apk/release/app-release.apk fiance.apk
+
+      - name: Publicar na Release "latest"
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Fiance — última versão
+          body: |
+            APK mais recente do app Fiance, compilado automaticamente.
+
+            **Para instalar:** baixe o `fiance.apk` abaixo no seu celular Android,
+            abra o arquivo e permita a instalação de fontes desconhecidas.
+          files: fiance.apk
+          make_latest: true
