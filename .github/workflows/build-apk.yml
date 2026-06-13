@@ -36,31 +36,21 @@ jobs:
 
       - name: Ajustar gradle.properties (JDK 17 + somente arm64-v8a)
         run: |
-          echo "org.gradle.java.installations.auto-download=false" >> android/gradle.properties
-          echo "org.gradle.java.installations.fromEnv=JAVA_HOME" >> android/gradle.properties
-          echo "reactNativeArchitectures=arm64-v8a" >> android/gradle.properties
+          # IMPORTANTE: echo "" garante uma quebra de linha antes de anexar,
+          # senao a 1a linha cola em "expo.inlineModules.watchedDirectories=[]"
+          # (que nao termina com \n) e quebra o JSON.parse do expo-modules-autolinking.
+          {
+            echo ""
+            echo "org.gradle.java.installations.auto-download=false"
+            echo "org.gradle.java.installations.fromEnv=JAVA_HOME"
+            echo "reactNativeArchitectures=arm64-v8a"
+          } >> android/gradle.properties
 
       - name: Dar permissão ao gradlew
         run: chmod +x android/gradlew
 
-      - name: Diagnostico - capturar stderr do node (dry-run)
-        working-directory: android
-        run: |
-          set +e
-          REALNODE="$(command -v node)"
-          echo "real node: $REALNODE ($("$REALNODE" -v))"
-          mkdir -p /tmp/nodeshim
-          printf '#!/usr/bin/env bash\nexec "%s" "$@" 2> >(tee -a /tmp/node-stderr.log >&2)\n' "$REALNODE" > /tmp/nodeshim/node
-          chmod +x /tmp/nodeshim/node
-          export PATH="/tmp/nodeshim:$PATH"
-          : > /tmp/node-stderr.log
-          ./gradlew :app:assembleRelease --dry-run --stacktrace 2>&1 | tail -20
-          echo "========== STDERR DO NODE CAPTURADO =========="
-          cat /tmp/node-stderr.log
-          echo "========== FIM =========="
-
       - name: Compilar APK (release, assinado com debug key)
-        run: cd android && ./gradlew assembleRelease --no-daemon --stacktrace
+        run: cd android && ./gradlew assembleRelease --no-daemon
 
       - name: Renomear APK
         run: cp android/app/build/outputs/apk/release/app-release.apk fiance.apk
