@@ -19,7 +19,7 @@ jobs:
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Configurar Java (JDK 17)
@@ -44,7 +44,7 @@ jobs:
         run: chmod +x android/gradlew
 
       - name: Compilar APK (release, assinado com debug key)
-        run: cd android && ./gradlew assembleRelease --no-daemon
+        run: cd android && ./gradlew assembleRelease --no-daemon --stacktrace
 
       - name: Renomear APK
         run: cp android/app/build/outputs/apk/release/app-release.apk fiance.apk
