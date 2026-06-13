@@ -11,6 +11,8 @@ import TransactionsScreen from './src/screens/TransactionsScreen';
 import ChartsScreen from './src/screens/ChartsScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import AddTransactionScreen from './src/screens/AddTransactionScreen';
+import RecurringScreen from './src/screens/RecurringScreen';
+import InstallmentsScreen from './src/screens/InstallmentsScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -49,8 +51,8 @@ function Tabs() {
         },
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: 'Início' }} />
-      <Tab.Screen name="Transactions" component={TransactionsScreen} options={{ tabBarLabel: 'Transações' }} />
+      <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: 'Painel' }} />
+      <Tab.Screen name="Transactions" component={TransactionsScreen} options={{ tabBarLabel: 'Lançamentos' }} />
       <Tab.Screen name="Charts" component={ChartsScreen} options={{ tabBarLabel: 'Gráficos' }} />
       <Tab.Screen name="Settings" component={SettingsScreen} options={{ tabBarLabel: 'Config' }} />
     </Tab.Navigator>
@@ -65,6 +67,8 @@ export default function App() {
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Main" component={Tabs} />
           <Stack.Screen name="AddTransaction" component={AddTransactionScreen} />
+          <Stack.Screen name="Recurring" component={RecurringScreen} />
+          <Stack.Screen name="Installments" component={InstallmentsScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </FinanceProvider>

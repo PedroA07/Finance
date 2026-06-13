@@ -2,7 +2,12 @@ export const formatCurrency = (value) => {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',
-  }).format(value);
+  }).format(Number(value) || 0);
+};
+
+// Recebe uma fração (0..1) e devolve "12,3%".
+export const formatPercent = (fraction, decimals = 1) => {
+  return `${((Number(fraction) || 0) * 100).toFixed(decimals).replace('.', ',')}%`;
 };
 
 export const formatDate = (dateStr) => {

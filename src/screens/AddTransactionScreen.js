@@ -5,13 +5,13 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFinance } from '../context/FinanceContext';
-import { formatCurrency } from '../utils/formatters';
 
 const COLORS = {
   bg: '#0F172A',
   card: '#1E293B',
   income: '#22C55E',
   expense: '#EF4444',
+  invest: '#38BDF8',
   accent: '#6366F1',
   text: '#F1F5F9',
   muted: '#94A3B8',
@@ -19,21 +19,27 @@ const COLORS = {
   input: '#243044',
 };
 
+const TYPES = [
+  { key: 'expense', label: 'Despesa', icon: 'arrow-up-circle', color: COLORS.expense },
+  { key: 'income', label: 'Receita', icon: 'arrow-down-circle', color: COLORS.income },
+  { key: 'investment', label: 'Investir', icon: 'wallet', color: COLORS.invest },
+];
+
 export default function AddTransactionScreen({ navigation, route }) {
-  const { addTransaction, editTransaction, categories } = useFinance();
+  const { addTransaction, editTransaction, categories, paymentMethods } = useFinance();
   const editing = route?.params?.transaction;
 
   const [type, setType] = useState(editing?.type || 'expense');
   const [amount, setAmount] = useState(editing ? String(editing.amount) : '');
   const [description, setDescription] = useState(editing?.description || '');
   const [category, setCategory] = useState(editing?.category || '');
+  const [paymentMethod, setPaymentMethod] = useState(editing?.paymentMethod || '');
   const [date, setDate] = useState(editing?.date || new Date().toISOString().split('T')[0]);
 
   const availableCategories = categories[type] || [];
 
   const handleAmountChange = (text) => {
-    const cleaned = text.replace(/[^0-9,]/g, '').replace(',', '.');
-    setAmount(cleaned);
+    setAmount(text.replace(/[^0-9,.]/g, '').replace(',', '.'));
   };
 
   const handleSave = async () => {
@@ -51,13 +57,13 @@ export default function AddTransactionScreen({ navigation, route }) {
       return;
     }
 
-    const tx = { type, amount: parsedAmount, description: description.trim(), category, date };
+    const tx = {
+      type, amount: parsedAmount, description: description.trim(),
+      category, paymentMethod, date,
+    };
 
-    if (editing) {
-      await editTransaction(editing.id, tx);
-    } else {
-      await addTransaction(tx);
-    }
+    if (editing) await editTransaction(editing.id, tx);
+    else await addTransaction(tx);
     navigation.goBack();
   };
 
@@ -71,26 +77,25 @@ export default function AddTransactionScreen({ navigation, route }) {
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={24} color={COLORS.text} />
           </TouchableOpacity>
-          <Text style={styles.title}>{editing ? 'Editar' : 'Nova'} Transação</Text>
+          <Text style={styles.title}>{editing ? 'Editar' : 'Novo'} Lançamento</Text>
           <View style={{ width: 40 }} />
         </View>
 
         {/* Tipo */}
         <View style={styles.typeRow}>
-          <TouchableOpacity
-            style={[styles.typeBtn, type === 'expense' && styles.typeBtnActive, type === 'expense' && { borderColor: COLORS.expense }]}
-            onPress={() => { setType('expense'); setCategory(''); }}
-          >
-            <Ionicons name="arrow-up-circle" size={20} color={type === 'expense' ? COLORS.expense : COLORS.muted} />
-            <Text style={[styles.typeBtnText, type === 'expense' && { color: COLORS.expense }]}>Despesa</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.typeBtn, type === 'income' && styles.typeBtnActive, type === 'income' && { borderColor: COLORS.income }]}
-            onPress={() => { setType('income'); setCategory(''); }}
-          >
-            <Ionicons name="arrow-down-circle" size={20} color={type === 'income' ? COLORS.income : COLORS.muted} />
-            <Text style={[styles.typeBtnText, type === 'income' && { color: COLORS.income }]}>Receita</Text>
-          </TouchableOpacity>
+          {TYPES.map(t => {
+            const active = type === t.key;
+            return (
+              <TouchableOpacity
+                key={t.key}
+                style={[styles.typeBtn, active && { backgroundColor: COLORS.input, borderColor: t.color }]}
+                onPress={() => { setType(t.key); setCategory(''); }}
+              >
+                <Ionicons name={t.icon} size={20} color={active ? t.color : COLORS.muted} />
+                <Text style={[styles.typeBtnText, active && { color: t.color }]}>{t.label}</Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
         {/* Valor */}
@@ -123,7 +128,7 @@ export default function AddTransactionScreen({ navigation, route }) {
           <Text style={styles.label}>Data (AAAA-MM-DD)</Text>
           <TextInput
             style={styles.input}
-            placeholder="2025-05-31"
+            placeholder="2026-06-13"
             placeholderTextColor={COLORS.muted}
             value={date}
             onChangeText={setDate}
@@ -133,16 +138,33 @@ export default function AddTransactionScreen({ navigation, route }) {
         {/* Categoria */}
         <View style={styles.fieldCard}>
           <Text style={styles.label}>Categoria</Text>
-          <View style={styles.categoryGrid}>
+          <View style={styles.chipGrid}>
             {availableCategories.map(cat => (
               <TouchableOpacity
                 key={cat}
-                style={[styles.catChip, category === cat && styles.catChipActive]}
+                style={[styles.chip, category === cat && styles.chipActive]}
                 onPress={() => setCategory(cat)}
               >
-                <Text style={[styles.catChipText, category === cat && styles.catChipTextActive]}>
-                  {cat}
-                </Text>
+                <Text style={[styles.chipText, category === cat && styles.chipTextActive]}>{cat}</Text>
+              </TouchableOpacity>
+            ))}
+            {availableCategories.length === 0 && (
+              <Text style={styles.hint}>Adicione categorias na aba Config.</Text>
+            )}
+          </View>
+        </View>
+
+        {/* Forma de pagamento */}
+        <View style={styles.fieldCard}>
+          <Text style={styles.label}>Forma de pagamento (opcional)</Text>
+          <View style={styles.chipGrid}>
+            {paymentMethods.map(pm => (
+              <TouchableOpacity
+                key={pm}
+                style={[styles.chip, paymentMethod === pm && styles.chipActive]}
+                onPress={() => setPaymentMethod(paymentMethod === pm ? '' : pm)}
+              >
+                <Text style={[styles.chipText, paymentMethod === pm && styles.chipTextActive]}>{pm}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -164,14 +186,13 @@ const styles = StyleSheet.create({
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 50, marginBottom: 24 },
   backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   title: { fontSize: 20, fontWeight: '800', color: COLORS.text },
-  typeRow: { flexDirection: 'row', gap: 12, marginBottom: 16 },
+  typeRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },
   typeBtn: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, padding: 14, borderRadius: 14, borderWidth: 2, borderColor: COLORS.border,
+    flex: 1, flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+    gap: 4, paddingVertical: 12, borderRadius: 14, borderWidth: 2, borderColor: COLORS.border,
     backgroundColor: COLORS.card,
   },
-  typeBtnActive: { backgroundColor: COLORS.input },
-  typeBtnText: { fontSize: 15, fontWeight: '600', color: COLORS.muted },
+  typeBtnText: { fontSize: 13, fontWeight: '600', color: COLORS.muted },
   fieldCard: {
     backgroundColor: COLORS.card, borderRadius: 14, padding: 16,
     marginBottom: 12, borderWidth: 1, borderColor: COLORS.border,
@@ -182,19 +203,18 @@ const styles = StyleSheet.create({
     borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12,
     borderWidth: 1, borderColor: COLORS.border,
   },
-  categoryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  catChip: {
+  chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chip: {
     paddingHorizontal: 14, paddingVertical: 8,
-    borderRadius: 20, borderWidth: 1, borderColor: COLORS.border,
-    backgroundColor: COLORS.input,
+    borderRadius: 20, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.input,
   },
-  catChipActive: { backgroundColor: COLORS.accent, borderColor: COLORS.accent },
-  catChipText: { color: COLORS.muted, fontSize: 13 },
-  catChipTextActive: { color: '#fff', fontWeight: '600' },
+  chipActive: { backgroundColor: COLORS.accent, borderColor: COLORS.accent },
+  chipText: { color: COLORS.muted, fontSize: 13 },
+  chipTextActive: { color: '#fff', fontWeight: '600' },
+  hint: { color: COLORS.muted, fontSize: 13, fontStyle: 'italic' },
   saveBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    backgroundColor: COLORS.accent, borderRadius: 14, padding: 16,
-    gap: 8, marginTop: 8,
+    backgroundColor: COLORS.accent, borderRadius: 14, padding: 16, gap: 8, marginTop: 8,
   },
   saveBtnText: { color: '#fff', fontSize: 17, fontWeight: '700' },
 });
