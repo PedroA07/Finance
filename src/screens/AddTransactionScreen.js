@@ -4,7 +4,17 @@ import {
   ScrollView, KeyboardAvoidingView, Platform, Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFinance } from '../context/FinanceContext';
+import { maskCurrencyInput, unmaskCurrency, maskCurrencyFromNumber } from '../utils/formatters';
+
+const pad = (n) => String(n).padStart(2, '0');
+const toYMD = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parseYMD = (s) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s || ''));
+  if (m) { const d = new Date(+m[1], +m[2] - 1, +m[3]); if (!isNaN(d)) return d; }
+  return new Date();
+};
 
 const COLORS = {
   bg: '#0F172A',
@@ -30,20 +40,24 @@ export default function AddTransactionScreen({ navigation, route }) {
   const editing = route?.params?.transaction;
 
   const [type, setType] = useState(editing?.type || 'expense');
-  const [amount, setAmount] = useState(editing ? String(editing.amount) : '');
+  const [amount, setAmount] = useState(editing ? maskCurrencyFromNumber(editing.amount) : '');
   const [description, setDescription] = useState(editing?.description || '');
   const [category, setCategory] = useState(editing?.category || '');
   const [paymentMethod, setPaymentMethod] = useState(editing?.paymentMethod || '');
   const [date, setDate] = useState(editing?.date || new Date().toISOString().split('T')[0]);
+  const [showPicker, setShowPicker] = useState(false);
 
   const availableCategories = categories[type] || [];
 
-  const handleAmountChange = (text) => {
-    setAmount(text.replace(/[^0-9,.]/g, '').replace(',', '.'));
+  const onChangeDate = (event, selected) => {
+    setShowPicker(false);
+    if (event.type !== 'dismissed' && selected) setDate(toYMD(selected));
   };
 
+  const handleAmountChange = (text) => setAmount(maskCurrencyInput(text));
+
   const handleSave = async () => {
-    const parsedAmount = parseFloat(amount.replace(',', '.'));
+    const parsedAmount = unmaskCurrency(amount);
     if (!parsedAmount || parsedAmount <= 0) {
       Alert.alert('Erro', 'Informe um valor válido.');
       return;
@@ -100,15 +114,18 @@ export default function AddTransactionScreen({ navigation, route }) {
 
         {/* Valor */}
         <View style={styles.fieldCard}>
-          <Text style={styles.label}>Valor (R$)</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="0,00"
-            placeholderTextColor={COLORS.muted}
-            keyboardType="decimal-pad"
-            value={amount}
-            onChangeText={handleAmountChange}
-          />
+          <Text style={styles.label}>Valor</Text>
+          <View style={styles.amountRow}>
+            <Text style={styles.amountPrefix}>R$</Text>
+            <TextInput
+              style={styles.amountInput}
+              placeholder="0,00"
+              placeholderTextColor={COLORS.muted}
+              keyboardType="numeric"
+              value={amount}
+              onChangeText={handleAmountChange}
+            />
+          </View>
         </View>
 
         {/* Descrição */}
@@ -125,14 +142,23 @@ export default function AddTransactionScreen({ navigation, route }) {
 
         {/* Data */}
         <View style={styles.fieldCard}>
-          <Text style={styles.label}>Data (AAAA-MM-DD)</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="2026-06-13"
-            placeholderTextColor={COLORS.muted}
-            value={date}
-            onChangeText={setDate}
-          />
+          <Text style={styles.label}>Data</Text>
+          <View style={styles.dateRow}>
+            <TextInput
+              style={[styles.input, { flex: 1 }]}
+              placeholder="AAAA-MM-DD"
+              placeholderTextColor={COLORS.muted}
+              value={date}
+              onChangeText={setDate}
+              autoCapitalize="none"
+            />
+            <TouchableOpacity style={styles.calendarBtn} onPress={() => setShowPicker(true)}>
+              <Ionicons name="calendar" size={22} color={COLORS.accent} />
+            </TouchableOpacity>
+          </View>
+          {showPicker && (
+            <DateTimePicker value={parseYMD(date)} mode="date" onChange={onChangeDate} />
+          )}
         </View>
 
         {/* Categoria */}
@@ -202,6 +228,17 @@ const styles = StyleSheet.create({
     fontSize: 16, color: COLORS.text, backgroundColor: COLORS.input,
     borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12,
     borderWidth: 1, borderColor: COLORS.border,
+  },
+  amountRow: {
+    flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.input,
+    borderRadius: 10, paddingHorizontal: 14, borderWidth: 1, borderColor: COLORS.border,
+  },
+  amountPrefix: { color: COLORS.muted, fontSize: 16, fontWeight: '700', marginRight: 8 },
+  amountInput: { flex: 1, fontSize: 18, fontWeight: '600', color: COLORS.text, paddingVertical: 12 },
+  dateRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  calendarBtn: {
+    width: 48, height: 48, borderRadius: 10, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: COLORS.input, borderWidth: 1, borderColor: COLORS.border,
   },
   chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {

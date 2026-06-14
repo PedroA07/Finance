@@ -4,8 +4,10 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { FinanceProvider } from './src/context/FinanceContext';
+import { UpdatesProvider } from './src/context/UpdatesContext';
 import HomeScreen from './src/screens/HomeScreen';
 import TransactionsScreen from './src/screens/TransactionsScreen';
 import ChartsScreen from './src/screens/ChartsScreen';
@@ -26,6 +28,7 @@ const COLORS = {
 };
 
 function Tabs() {
+  const insets = useSafeAreaInsets();
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -33,9 +36,9 @@ function Tabs() {
         tabBarStyle: {
           backgroundColor: COLORS.card,
           borderTopColor: COLORS.border,
-          paddingBottom: 8,
+          paddingBottom: 8 + insets.bottom,
           paddingTop: 8,
-          height: 64,
+          height: 64 + insets.bottom,
         },
         tabBarActiveTintColor: COLORS.accent,
         tabBarInactiveTintColor: COLORS.muted,
@@ -61,16 +64,20 @@ function Tabs() {
 
 export default function App() {
   return (
-    <FinanceProvider>
-      <NavigationContainer>
-        <StatusBar style="light" />
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="Main" component={Tabs} />
-          <Stack.Screen name="AddTransaction" component={AddTransactionScreen} />
-          <Stack.Screen name="Recurring" component={RecurringScreen} />
-          <Stack.Screen name="Installments" component={InstallmentsScreen} />
-        </Stack.Navigator>
-      </NavigationContainer>
-    </FinanceProvider>
+    <SafeAreaProvider>
+      <FinanceProvider>
+        <UpdatesProvider>
+          <NavigationContainer>
+            <StatusBar style="light" />
+            <Stack.Navigator screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="Main" component={Tabs} />
+              <Stack.Screen name="AddTransaction" component={AddTransactionScreen} />
+              <Stack.Screen name="Recurring" component={RecurringScreen} />
+              <Stack.Screen name="Installments" component={InstallmentsScreen} />
+            </Stack.Navigator>
+          </NavigationContainer>
+        </UpdatesProvider>
+      </FinanceProvider>
+    </SafeAreaProvider>
   );
 }

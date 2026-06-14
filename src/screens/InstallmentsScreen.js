@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFinance } from '../context/FinanceContext';
-import { formatCurrency } from '../utils/formatters';
+import { formatCurrency, maskCurrencyInput, unmaskCurrency, maskCurrencyFromNumber } from '../utils/formatters';
 import {
   installmentInfo, installmentsTotalForMonth, currentMonthKey, labelMonth,
 } from '../utils/finance';
@@ -42,7 +42,7 @@ export default function InstallmentsScreen({ navigation }) {
     setEditingId(item.id);
     setForm({
       description: item.description || '', category: item.category || '',
-      installmentValue: String(item.installmentValue ?? ''),
+      installmentValue: maskCurrencyFromNumber(item.installmentValue),
       firstMonth: item.firstMonth || thisMonth,
       totalInstallments: String(item.totalInstallments ?? ''),
       paymentMethod: item.paymentMethod || '',
@@ -51,7 +51,7 @@ export default function InstallmentsScreen({ navigation }) {
   };
 
   const save = async () => {
-    const installmentValue = parseFloat(String(form.installmentValue).replace(',', '.'));
+    const installmentValue = unmaskCurrency(form.installmentValue);
     const totalInstallments = parseInt(form.totalInstallments, 10);
     if (!form.description.trim()) return Alert.alert('Erro', 'Informe uma descrição.');
     if (!form.category) return Alert.alert('Erro', 'Selecione uma categoria.');
@@ -168,9 +168,9 @@ export default function InstallmentsScreen({ navigation }) {
               <View style={styles.twoCols}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.label}>Valor da parcela (R$)</Text>
-                  <TextInput style={styles.input} keyboardType="decimal-pad" placeholder="0,00"
+                  <TextInput style={styles.input} keyboardType="numeric" placeholder="0,00"
                     placeholderTextColor={COLORS.muted} value={form.installmentValue}
-                    onChangeText={t => set({ installmentValue: t.replace(/[^0-9,.]/g, '').replace(',', '.') })} />
+                    onChangeText={t => set({ installmentValue: maskCurrencyInput(t) })} />
                 </View>
                 <View style={{ width: 110 }}>
                   <Text style={styles.label}>Nº parcelas</Text>

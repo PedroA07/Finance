@@ -10,6 +10,27 @@ export const formatPercent = (fraction, decimals = 1) => {
   return `${((Number(fraction) || 0) * 100).toFixed(decimals).replace('.', ',')}%`;
 };
 
+// ----- Máscara de moeda (digita-se da direita para a esquerda, centavos primeiro) -----
+// "12345" -> "123,45" ; "1234567" -> "12.345,67"
+export const maskCurrencyInput = (raw) => {
+  const digits = String(raw).replace(/\D/g, '');
+  if (!digits) return '';
+  const value = parseInt(digits, 10) / 100;
+  return value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
+
+// Converte o texto mascarado de volta para número (123,45 -> 123.45).
+export const unmaskCurrency = (masked) => {
+  const digits = String(masked).replace(/\D/g, '');
+  return digits ? parseInt(digits, 10) / 100 : 0;
+};
+
+// Número -> texto mascarado, para preencher o campo ao editar.
+export const maskCurrencyFromNumber = (n) => {
+  const cents = Math.round((Number(n) || 0) * 100);
+  return cents ? maskCurrencyInput(String(cents)) : '';
+};
+
 export const formatDate = (dateStr) => {
   const date = new Date(dateStr);
   return date.toLocaleDateString('pt-BR', {

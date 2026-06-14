@@ -31,6 +31,10 @@ jobs:
       - name: Instalar dependências
         run: npm install
 
+      - name: Gerar buildInfo (identidade do build p/ autoatualização)
+        run: |
+          node -e "const fs=require('fs');const v=require('./app.json').expo.version;const info={sha:(process.env.GITHUB_SHA||'ci').slice(0,7),builtAt:new Date().toISOString(),version:v};fs.writeFileSync('src/buildInfo.json',JSON.stringify(info,null,2));fs.writeFileSync('version.json',JSON.stringify(info));console.log(info);"
+
       - name: Gerar projeto nativo Android (expo prebuild)
         run: npx expo prebuild --platform android --no-install
 
@@ -65,5 +69,7 @@ jobs:
 
             **Para instalar:** baixe o `fiance.apk` abaixo no seu celular Android,
             abra o arquivo e permita a instalação de fontes desconhecidas.
-          files: fiance.apk
+          files: |
+            fiance.apk
+            version.json
           make_latest: true

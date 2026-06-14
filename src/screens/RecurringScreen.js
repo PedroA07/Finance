@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFinance } from '../context/FinanceContext';
-import { formatCurrency } from '../utils/formatters';
+import { formatCurrency, maskCurrencyInput, unmaskCurrency, maskCurrencyFromNumber } from '../utils/formatters';
 
 const COLORS = {
   bg: '#0F172A', card: '#1E293B', input: '#243044',
@@ -38,7 +38,7 @@ export default function RecurringScreen({ navigation }) {
   const openEdit = (item) => {
     setEditingId(item.id);
     setForm({
-      type: item.type || 'expense', amount: String(item.amount ?? ''),
+      type: item.type || 'expense', amount: maskCurrencyFromNumber(item.amount),
       description: item.description || '', category: item.category || '',
       paymentMethod: item.paymentMethod || '', active: item.active !== false,
     });
@@ -46,7 +46,7 @@ export default function RecurringScreen({ navigation }) {
   };
 
   const save = async () => {
-    const amount = parseFloat(String(form.amount).replace(',', '.'));
+    const amount = unmaskCurrency(form.amount);
     if (!amount || amount <= 0) return Alert.alert('Erro', 'Informe um valor válido.');
     if (!form.description.trim()) return Alert.alert('Erro', 'Informe uma descrição.');
     if (!form.category) return Alert.alert('Erro', 'Selecione uma categoria.');
@@ -163,9 +163,9 @@ export default function RecurringScreen({ navigation }) {
               </View>
 
               <Text style={styles.label}>Valor por mês (R$)</Text>
-              <TextInput style={styles.input} keyboardType="decimal-pad" placeholder="0,00"
+              <TextInput style={styles.input} keyboardType="numeric" placeholder="0,00"
                 placeholderTextColor={COLORS.muted} value={form.amount}
-                onChangeText={t => set({ amount: t.replace(/[^0-9,.]/g, '').replace(',', '.') })} />
+                onChangeText={t => set({ amount: maskCurrencyInput(t) })} />
 
               <Text style={styles.label}>Descrição</Text>
               <TextInput style={styles.input} placeholder="Ex: Aluguel, Netflix, Salário"

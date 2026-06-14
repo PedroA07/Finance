@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFinance } from '../context/FinanceContext';
+import { useUpdates } from '../context/UpdatesContext';
 import { formatCurrency } from '../utils/formatters';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -28,6 +29,7 @@ export default function SettingsScreen({ navigation }) {
     addCategory, removeCategory, addPaymentMethod, removePaymentMethod,
     totalIncome, totalExpense, balance,
   } = useFinance();
+  const { current, checking, updateAvailable, remote, lastChecked, checkNow, openInstall } = useUpdates();
 
   const [newCat, setNewCat] = useState({ expense: '', income: '', investment: '' });
   const [newPm, setNewPm] = useState('');
@@ -152,14 +154,38 @@ export default function SettingsScreen({ navigation }) {
       </View>
 
       {/* Atualizações */}
-      <View style={styles.card}>
+      <View style={[styles.card, updateAvailable && { borderColor: COLORS.accent }]}>
         <Text style={styles.cardTitle}>Atualizações do app</Text>
-        <Text style={styles.cardDesc}>
-          A cada nova versão publicada no repositório, um APK novo fica disponível no mesmo link.
-        </Text>
-        <TouchableOpacity style={styles.updateBtn} onPress={openReleases}>
-          <Ionicons name="download" size={20} color="#fff" />
-          <Text style={styles.updateBtnText}>Baixar última versão</Text>
+        <View style={styles.statRow}>
+          <Text style={styles.statLabel}>Versão instalada</Text>
+          <Text style={styles.statValue}>v{current?.version} ({current?.sha})</Text>
+        </View>
+        {checking ? (
+          <Text style={styles.cardDesc}>Verificando atualizações…</Text>
+        ) : updateAvailable ? (
+          <>
+            <Text style={[styles.cardDesc, { color: COLORS.accent, marginTop: 12 }]}>
+              Nova versão disponível{remote?.version ? ` (v${remote.version})` : ''}! Toque para baixar e instalar.
+            </Text>
+            <TouchableOpacity style={styles.updateBtn} onPress={openInstall}>
+              <Ionicons name="cloud-download" size={20} color="#fff" />
+              <Text style={styles.updateBtnText}>Atualizar agora</Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <>
+            <Text style={[styles.cardDesc, { marginTop: 12 }]}>
+              {lastChecked ? 'Você está na versão mais recente. ✓' : 'A cada nova versão publicada, um APK novo fica disponível.'}
+            </Text>
+            <TouchableOpacity style={styles.updateBtnAlt} onPress={() => checkNow({ silent: false })}>
+              <Ionicons name="refresh" size={18} color={COLORS.accent} />
+              <Text style={styles.updateBtnAltText}>Verificar atualização</Text>
+            </TouchableOpacity>
+          </>
+        )}
+        <TouchableOpacity style={styles.releasesLink} onPress={openReleases}>
+          <Ionicons name="open-outline" size={16} color={COLORS.muted} />
+          <Text style={styles.releasesLinkText}>Abrir página de releases</Text>
         </TouchableOpacity>
       </View>
 
@@ -222,6 +248,13 @@ const styles = StyleSheet.create({
     gap: 8, backgroundColor: COLORS.accent, borderRadius: 12, padding: 12,
   },
   updateBtnText: { color: '#fff', fontSize: 15, fontWeight: '600' },
+  updateBtnAlt: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    borderWidth: 1, borderColor: COLORS.accent, borderRadius: 12, padding: 11,
+  },
+  updateBtnAltText: { color: COLORS.accent, fontSize: 15, fontWeight: '600' },
+  releasesLink: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 12 },
+  releasesLinkText: { color: COLORS.muted, fontSize: 13 },
   dangerBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     borderWidth: 1, borderColor: COLORS.expense, borderRadius: 12, padding: 12, justifyContent: 'center',
