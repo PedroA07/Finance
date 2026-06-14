@@ -15,6 +15,7 @@ import SettingsScreen from './src/screens/SettingsScreen';
 import AddTransactionScreen from './src/screens/AddTransactionScreen';
 import RecurringScreen from './src/screens/RecurringScreen';
 import InstallmentsScreen from './src/screens/InstallmentsScreen';
+import ImportScreen from './src/screens/ImportScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -74,6 +75,7 @@ export default function App() {
               <Stack.Screen name="AddTransaction" component={AddTransactionScreen} />
               <Stack.Screen name="Recurring" component={RecurringScreen} />
               <Stack.Screen name="Installments" component={InstallmentsScreen} />
+              <Stack.Screen name="Import" component={ImportScreen} />
             </Stack.Navigator>
           </NavigationContainer>
         </UpdatesProvider>

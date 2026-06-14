@@ -87,6 +87,16 @@ export function FinanceProvider({ children }) {
     await persist(KEYS.transactions, transactions.filter(t => t.id !== id), setTransactions);
   }, [transactions]);
 
+  // Importação em lote (extratos OFX/CSV) — salva tudo de uma vez.
+  const addManyTransactions = useCallback(async (list) => {
+    if (!list || !list.length) return 0;
+    const stamped = list.map(t => ({
+      id: genId(), createdAt: new Date().toISOString(), type: 'expense', ...t,
+    }));
+    await persist(KEYS.transactions, [...stamped, ...transactions], setTransactions);
+    return stamped.length;
+  }, [transactions]);
+
   // ---- Recorrentes ----
   const addRecurring = useCallback(async (item) => {
     const newItem = { id: genId(), active: true, type: 'expense', ...item };
@@ -163,7 +173,7 @@ export function FinanceProvider({ children }) {
       // dados
       transactions, recurring, installments, categories, paymentMethods, isLoading,
       // lançamentos
-      addTransaction, editTransaction, removeTransaction,
+      addTransaction, editTransaction, removeTransaction, addManyTransactions,
       // recorrentes
       addRecurring, editRecurring, removeRecurring, toggleRecurring,
       // parcelados

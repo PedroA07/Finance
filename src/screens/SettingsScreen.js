@@ -88,6 +88,11 @@ export default function SettingsScreen({ navigation }) {
           <Text style={styles.linkText}>Parcelados</Text>
           <Ionicons name="chevron-forward" size={18} color={COLORS.muted} />
         </TouchableOpacity>
+        <TouchableOpacity style={[styles.linkRow, { borderBottomWidth: 0 }]} onPress={() => navigation.navigate('Import')}>
+          <Ionicons name="cloud-upload" size={20} color={COLORS.accent} />
+          <Text style={styles.linkText}>Importar extrato/fatura</Text>
+          <Ionicons name="chevron-forward" size={18} color={COLORS.muted} />
+        </TouchableOpacity>
       </View>
 
       {/* Categorias */}
